@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>HireOS — Design Preview</title>
+<link rel="stylesheet" href="preview-styles.css" />
+</head>
+<body>
+
+<div style="padding:20px;background:var(--gray-100);">
+  <div style="text-align:center;padding:14px;background:var(--navy-950);color:#fff;border-radius:8px;margin-bottom:24px;font-size:13px;">
+    ⬇ This is a static visual preview only — login and data won't work here. It exists purely so you can see the actual redesigned theme without waiting on hosting.
+  </div>
+</div>
+
+<!-- LOGIN SCREEN -->
+<div id="loginScreen">
+  <div class="login-card">
+    <h1>HireOS</h1>
+    <div class="tag">WorkSource Recruitment Portal</div>
+    <label>Email</label>
+    <input placeholder="you@worksource.co.in" />
+    <label>Password</label>
+    <input type="password" placeholder="••••••••" />
+    <button class="btn-primary">Sign in</button>
+  </div>
+</div>
+
+<!-- APP SHELL WITH SAMPLE CONTENT -->
+<div id="app" class="active">
+  <header class="topbar">
+    <div style="display:flex;align-items:center;">
+      <h1>HireOS</h1>
+      <span class="role-pill">Recruiter</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:14px;">
+      <span class="who">Farid Khan</span>
+      <button>Sign out</button>
+    </div>
+  </header>
+  <main>
+    <div class="tabbar">
+      <button class="active">Dashboard</button>
+      <button>Open Jobs</button>
+      <button>Candidate Search</button>
+    </div>
+
+    <div class="section-title"><h2>Dashboard</h2></div>
+    <div class="grid" style="margin-bottom:14px;">
+      <div class="card"><div class="meta-row">Candidates in active pipeline</div><div class="req-title" style="font-size:22px;">14</div></div>
+      <div class="card"><div class="meta-row">Interviews this week</div><div class="req-title" style="font-size:22px;">3</div></div>
+      <div class="card"><div class="meta-row">SLA breaches</div><div class="req-title" style="font-size:22px;">1</div></div>
+    </div>
+
+    <div class="section-title"><h2>Your open jobs</h2></div>
+
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+        <div>
+          <div class="req-title">Site Engineer — Civil</div>
+          <div class="meta-row"><span class="stage-pill">Corporate Hiring</span> · Construction/EPC · CTC 6–9 · 2 opening(s) · Priority: high</div>
+        </div>
+        <span class="badge open">open</span>
+      </div>
+      <div class="app-list">
+        <div class="app-row">
+          <div>
+            <div class="name">Priya Deshmukh</div>
+            <div class="sub">Exp 6 yrs · Current 7 → Exp 9.5 LPA · Notice 30d</div>
+            <div class="sub">AI match: <b>82/100</b></div>
+            <div class="sub" style="margin-top:3px;"><span class="badge on_hold">Client: Requested interview</span></div>
+          </div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <button class="icon-btn">Move</button>
+            <button class="icon-btn">AI match</button>
+            <button class="icon-btn">Interviews</button>
+          </div>
+        </div>
+        <div class="app-row">
+          <div>
+            <div class="name">Rohit Sharma</div>
+            <div class="sub">Exp 4 yrs · Current 5 → Exp 7 LPA · Notice 15d</div>
+          </div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <button class="icon-btn">Move</button>
+            <button class="icon-btn">AI match</button>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="icon-btn">+ Add candidate</button>
+        <button class="icon-btn">⬇ Export CSV</button>
+        <button class="icon-btn">🔍 Sourcing toolkit</button>
+        <button class="icon-btn">🔒 Client name hidden from candidates</button>
+      </div>
+    </div>
+
+    <div class="card" style="border-color:var(--warning);margin-top:14px;">
+      <div class="meta-row" style="color:var(--warning);font-weight:600;margin-bottom:6px;">1 candidate untouched for 5+ days:</div>
+      <div class="meta-row">Vikram Singh — Backend Developer (Screened, 6d)</div>
+    </div>
+
+    <div class="section-title"><h2>AI match example</h2></div>
+    <div class="ai-box">
+      <span class="score">82/100</span><br/>
+      Strong technical fit — 6 years directly in EPC site execution, matches the experience band exactly. Notice period slightly longer than ideal but within acceptable range for this urgency level.
+    </div>
+
+    <div class="section-title"><h2>Empty state example</h2></div>
+    <div class="empty">No open jobs assigned to your segment yet. Once BD publishes a requisition matching your segments, it'll appear here.</div>
+  </main>
+</div>
+
+</body>
+</html>
