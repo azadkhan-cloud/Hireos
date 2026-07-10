@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="HireOS" />
+<meta name="theme-color" content="#132A54" />
+<title>HireOS — WorkSource</title>
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<!-- ================= LOGIN ================= -->
+<div id="loginScreen">
+  <div class="login-card">
+    <h1>HireOS</h1>
+    <div class="tag">WorkSource Recruitment Portal</div>
+    <label>Email</label>
+    <input id="loginEmail" type="email" placeholder="you@worksource.co.in" />
+    <label>Password</label>
+    <input id="loginPassword" type="password" placeholder="••••••••" />
+    <button class="btn-primary" onclick="doLogin()">Sign in</button>
+    <div id="loginErr" class="err"></div>
+  </div>
+</div>
+
+<!-- ================= APP ================= -->
+<div id="app">
+  <header class="topbar">
+    <div style="display:flex;align-items:center;">
+      <h1>HireOS</h1>
+      <span class="role-pill" id="rolePill"></span>
+    </div>
+    <div style="display:flex;align-items:center;gap:14px;">
+      <span class="who" id="whoAmI"></span>
+      <button onclick="logout()">Sign out</button>
+    </div>
+  </header>
+  <main id="mainContent"></main>
+</div>
+
+<div id="toastHolder"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
