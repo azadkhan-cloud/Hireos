@@ -97,7 +97,8 @@
     var bg = document.createElement('div'); bg.id = 'fxPanelBg';
     bg.onclick = function (e) { if (e.target === bg) closePanel(); };
     var tabs = '<button type="button" data-t="interviews">📅 Interview Invites</button>' +
-      '<button type="button" data-t="offers">📄 Offers</button>';
+      '<button type="button" data-t="offers">📄 Offers</button>' +
+      '<button type="button" data-t="onboarding">🚀 Onboarding</button>';
     if (profile && (profile.role === 'admin' || profile.role === 'bd')) {
       tabs += '<button type="button" data-t="digest">📊 Daily Digest</button>';
     }
@@ -121,6 +122,7 @@
     });
     if (currentTab === 'interviews') renderInterviews();
     else if (currentTab === 'offers') renderOffers();
+    else if (currentTab === 'onboarding') renderOnboarding();
     else renderDigest();
   }
 
@@ -299,7 +301,176 @@
     });
   }
 
-  /* ---------- TAB 3: Daily digest ---------- */
+  /* ---------- TAB 3: Onboarding ---------- */
+  var CAT_ICON = { document: '📄', verification: '🔍', formality: '✍️', client: '🏢', followup: '📞' };
+  var openOnb = {};   // which onboarding cards are expanded
+
+  function renderOnboarding() {
+    body().innerHTML = 'Loading onboarding…';
+    Promise.all([
+      api('onboardings', { query: 'select=*,candidates(full_name,email,phone),requisitions(title),clients(company_name)&order=created_at.desc' }),
+      api('onboarding_tasks', { query: 'select=*&order=sort_order.asc' }),
+      // Accepted offers with no onboarding yet = candidates ready to start onboarding
+      api('offers', { query: 'status=eq.accepted&select=id,application_id,joining_date,applications(id,candidate_id,requisition_id,candidates(full_name),requisitions(title,client_id,clients(company_name)))' })
+    ]).then(function (res) {
+      var onbs = res[0] || [], tasks = res[1] || [], offers = res[2] || [];
+      var byOnb = {};
+      tasks.forEach(function (t) { (byOnb[t.onboarding_id] = byOnb[t.onboarding_id] || []).push(t); });
+      var started = {};
+      onbs.forEach(function (o) { started[o.application_id] = true; });
+      var pending = offers.filter(function (o) { return !started[o.application_id]; });
+
+      var html = '';
+
+      // --- candidates ready to onboard ---
+      if (pending.length) {
+        html += '<div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--gray-500,#757575);margin:4px 0 8px;">Offer accepted — start onboarding</div>';
+        html += pending.map(function (o, i) {
+          var a = o.applications || {}, c = a.candidates || {}, r = a.requisitions || {};
+          var cl = r.clients || {};
+          return '<div class="fxRow"><div>' +
+            '<div style="font-weight:700;font-size:14px;">' + esc(c.full_name) + ' — ' + esc(r.title) + '</div>' +
+            '<div style="font-size:12px;color:var(--gray-500,#757575);margin-top:3px;">' + esc(cl.company_name || '') +
+            (o.joining_date ? ' · joining ' + esc(o.joining_date) : '') + '</div></div>' +
+            '<button type="button" class="fxBtn" data-start="' + i + '">🚀 Start onboarding</button></div>';
+        }).join('');
+      }
+
+      // --- active onboardings ---
+      if (onbs.length) {
+        html += '<div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--gray-500,#757575);margin:16px 0 8px;">In onboarding</div>';
+        html += onbs.map(function (o, i) {
+          var c = o.candidates || {}, r = o.requisitions || {}, cl = o.clients || {};
+          var ts = byOnb[o.id] || [];
+          var req = ts.filter(function (t) { return t.required; });
+          var done = req.filter(function (t) { return t.status === 'received' || t.status === 'waived'; });
+          var pct = req.length ? Math.round(done.length / req.length * 100) : 0;
+          var isOpen = !!openOnb[o.id];
+          var statusBadge = o.status === 'joined' ? '<span class="badge open">joined</span>'
+            : o.status === 'dropped' ? '<span class="badge closed">dropped</span>'
+            : o.status === 'ready_to_join' ? '<span class="badge open">ready to join</span>'
+            : '<span class="badge on_hold">in progress</span>';
+
+          var s = '<div class="fxRow" style="flex-direction:column;align-items:stretch;">' +
+            '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap;">' +
+              '<div><div style="font-weight:700;font-size:14px;">' + esc(c.full_name) + ' — ' + esc(r.title) + '</div>' +
+              '<div style="font-size:12px;color:var(--gray-500,#757575);margin-top:3px;">' + esc(cl.company_name || '') +
+                (o.joining_date ? ' · joining ' + esc(o.joining_date) : ' · no joining date') +
+                ' · BGV: ' + esc(o.bgv_status) + ' · ' + statusBadge + '</div></div>' +
+              '<div style="display:flex;gap:6px;flex-wrap:wrap;">' +
+                '<button type="button" class="fxBtn" data-toggle="' + i + '">' + (isOpen ? '▲ Hide' : '▼ Checklist (' + done.length + '/' + req.length + ')') + '</button>' +
+                (o.status !== 'joined' ? '<button type="button" class="fxBtn" data-joined="' + i + '">✅ Mark joined</button>' : '') +
+                '<button type="button" class="fxBtn" data-edit="' + i + '">✏️ Details</button>' +
+              '</div>' +
+            '</div>' +
+            // progress bar
+            '<div style="margin-top:9px;height:7px;border-radius:9999px;background:var(--gray-200,#E0E0E0);overflow:hidden;">' +
+              '<div style="height:100%;width:' + pct + '%;background:' + (pct === 100 ? 'var(--success,#1E8E5A)' : 'var(--orange-500,#F5A623)') + ';transition:width .3s;"></div>' +
+            '</div>' +
+            '<div style="font-size:11.5px;color:var(--gray-500,#757575);margin-top:4px;">' + pct + '% of required items complete</div>';
+
+          if (isOpen) {
+            s += '<div style="margin-top:10px;display:flex;flex-direction:column;gap:5px;">' +
+              ts.map(function (t) {
+                var doneT = t.status === 'received' || t.status === 'waived';
+                return '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 10px;border-radius:8px;background:var(--white,#fff);border:1px solid var(--gray-200,#E0E0E0);">' +
+                  '<div style="display:flex;align-items:center;gap:8px;min-width:0;">' +
+                    '<span>' + (CAT_ICON[t.category] || '•') + '</span>' +
+                    '<span style="font-size:13px;' + (doneT ? 'text-decoration:line-through;color:var(--gray-500,#757575);' : '') + '">' + esc(t.label) +
+                      (t.required ? '' : ' <span style="font-size:10px;color:var(--gray-500,#757575);">(optional)</span>') + '</span>' +
+                  '</div>' +
+                  '<div style="display:flex;gap:4px;flex-shrink:0;">' +
+                    (t.status !== 'received' ? '<button type="button" class="fxBtn" data-task="' + t.id + '" data-st="received">✓ Received</button>' : '<span class="badge open">received</span>') +
+                    (!doneT ? '<button type="button" class="fxBtn" data-task="' + t.id + '" data-st="waived">Waive</button>' : '') +
+                    (doneT ? '<button type="button" class="fxBtn" data-task="' + t.id + '" data-st="pending">↺</button>' : '') +
+                  '</div></div>';
+              }).join('') + '</div>';
+          }
+          return s + '</div>';
+        }).join('');
+      }
+
+      if (!html) {
+        html = '<div class="fxEmpty">Nothing to onboard yet.<br/>When an offer is marked <b>accepted</b> in the Offers tab, the candidate appears here with a full joining checklist.</div>';
+      }
+      body().innerHTML = html;
+
+      // ---- handlers ----
+      body().querySelectorAll('button').forEach(function (btn) {
+        btn.onclick = function () {
+          // start onboarding
+          if (btn.hasAttribute('data-start')) {
+            var o = pending[+btn.getAttribute('data-start')];
+            var a = o.applications || {}, r = a.requisitions || {};
+            btn.textContent = 'Starting…'; btn.disabled = true;
+            api('onboardings', { method: 'POST', body: {
+              application_id: o.application_id,
+              candidate_id: a.candidate_id,
+              requisition_id: a.requisition_id,
+              client_id: r.client_id || null,
+              joining_date: o.joining_date || null,
+              owner_id: profile ? profile.id : null
+            }}).then(function () { say('Onboarding started — 14-item checklist created'); renderOnboarding(); })
+              .catch(function (e) { say('Failed: ' + String(e.message || e).slice(0, 120)); renderOnboarding(); });
+            return;
+          }
+          // expand/collapse
+          if (btn.hasAttribute('data-toggle')) {
+            var ob = onbs[+btn.getAttribute('data-toggle')];
+            openOnb[ob.id] = !openOnb[ob.id];
+            renderOnboarding();
+            return;
+          }
+          // task status
+          if (btn.hasAttribute('data-task')) {
+            var id = btn.getAttribute('data-task'), st = btn.getAttribute('data-st');
+            btn.disabled = true;
+            api('onboarding_tasks', { method: 'PATCH', query: 'id=eq.' + id, body: {
+              status: st,
+              completed_by: st === 'pending' ? null : (profile ? profile.id : null),
+              completed_at: st === 'pending' ? null : new Date().toISOString()
+            }}).then(function () { renderOnboarding(); })
+              .catch(function (e) { say('Failed: ' + String(e.message || e).slice(0, 120)); renderOnboarding(); });
+            return;
+          }
+          // mark joined
+          if (btn.hasAttribute('data-joined')) {
+            var ob2 = onbs[+btn.getAttribute('data-joined')];
+            var ts2 = byOnb[ob2.id] || [];
+            var missing = ts2.filter(function (t) { return t.required && t.status !== 'received' && t.status !== 'waived'; });
+            if (missing.length && !confirm(missing.length + ' required item(s) still pending:\n\n' +
+                missing.slice(0, 6).map(function (t) { return '• ' + t.label; }).join('\n') +
+                '\n\nMark as joined anyway?')) return;
+            api('onboardings', { method: 'PATCH', query: 'id=eq.' + ob2.id, body: {
+              status: 'joined', updated_at: new Date().toISOString()
+            }}).then(function () {
+              say('Marked joined — remember to move the candidate to “Joined” in the pipeline to trigger the placement.');
+              renderOnboarding();
+            }).catch(function (e) { say('Failed: ' + String(e.message || e).slice(0, 120)); });
+            return;
+          }
+          // edit details
+          if (btn.hasAttribute('data-edit')) {
+            var ob3 = onbs[+btn.getAttribute('data-edit')];
+            var jd = prompt('Joining date (YYYY-MM-DD), blank to clear:', ob3.joining_date || '');
+            if (jd === null) return;
+            var bgv = prompt('BGV status — pending / in_progress / cleared / flagged:', ob3.bgv_status || 'pending');
+            if (bgv === null) return;
+            bgv = String(bgv).trim().toLowerCase();
+            if (['pending','in_progress','cleared','flagged'].indexOf(bgv) < 0) { say('Invalid BGV status'); return; }
+            api('onboardings', { method: 'PATCH', query: 'id=eq.' + ob3.id, body: {
+              joining_date: jd || null, bgv_status: bgv, updated_at: new Date().toISOString()
+            }}).then(function () { say('Updated'); renderOnboarding(); })
+              .catch(function (e) { say('Failed: ' + String(e.message || e).slice(0, 120)); });
+          }
+        };
+      });
+    }).catch(function (e) {
+      body().innerHTML = '<div class="fxEmpty">Could not load onboarding: ' + esc(String(e.message || e)).slice(0, 200) + '</div>';
+    });
+  }
+
+  /* ---------- TAB 4: Daily digest ---------- */
   function renderDigest() {
     body().innerHTML = 'Loading digests…';
     api('daily_digests', { query: 'order=digest_date.desc&limit=7&select=*' }).then(function (rows) {
