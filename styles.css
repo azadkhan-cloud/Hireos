@@ -55,11 +55,84 @@
   --ease:cubic-bezier(.4,0,.2,1);
 }
 
+/* ---------- DARK THEME ----------
+   Applied when <html data-theme="dark">. We never rely on the browser's
+   auto-dark (it force-inverts and looks broken) — this is a designed palette. */
+html[data-theme="dark"]{
+  --navy-950:#060B14;
+  --navy-900:#5AA9F0;   /* headings/links: lightened brand blue for contrast on dark */
+  --navy-800:#7FBDF5;
+  --navy-700:#4E9BE4;
+  --orange-600:#F5A623;
+  --orange-500:#FFB945;
+  --orange-100:#3A2C12;
+  --orange-50:#241B0C;
+
+  --gray-950:#F5F7FA;
+  --gray-900:#E8EDF3;   /* primary text */
+  --gray-700:#C2CBD6;
+  --gray-500:#94A0AE;   /* muted text */
+  --gray-300:#5A6675;
+  --gray-200:#2A3442;   /* borders */
+  --gray-100:#1E2733;
+  --gray-50:#161E28;    /* raised surfaces */
+  --white:#0F1620;      /* card background */
+
+  --success:#4ADE80; --success-bg:#12301F;
+  --warning:#FBBF24; --warning-bg:#3A2C12;
+  --danger:#F87171;  --danger-bg:#3A1A1A;
+  --neutral-bg:#232C38;
+
+  --ink:var(--gray-900); --ink-soft:var(--gray-500);
+  --line:var(--gray-200); --bg:#0B111A; --card:var(--white);
+
+  --shadow-sm:0 1px 3px rgba(0,0,0,.4);
+  --shadow-md:0 4px 12px rgba(0,0,0,.45);
+  --shadow-lg:0 25px 50px -12px rgba(0,0,0,.7);
+  color-scheme:dark;
+}
+html[data-theme="dark"] body{background:var(--bg);color:var(--ink);}
+html[data-theme="dark"] header.topbar{background:linear-gradient(135deg,#101C2C 0%,#060B14 100%);border-bottom:1px solid var(--gray-200);}
+html[data-theme="dark"] header.topbar h1{color:#fff;}
+html[data-theme="dark"] #loginScreen{background:
+  radial-gradient(1100px 550px at 85% -10%, rgba(31,134,227,.14), transparent 60%),
+  linear-gradient(160deg,#0C1725 0%,#05090F 100%);}
+html[data-theme="dark"] .login-card{border:1px solid var(--gray-200);}
+html[data-theme="dark"] input,html[data-theme="dark"] select,html[data-theme="dark"] textarea{background:var(--gray-50);color:var(--ink);border-color:var(--gray-200);}
+html[data-theme="dark"] input:-webkit-autofill,html[data-theme="dark"] input:-webkit-autofill:hover,html[data-theme="dark"] input:-webkit-autofill:focus{
+  -webkit-box-shadow:0 0 0 1000px var(--gray-50) inset;-webkit-text-fill-color:var(--ink);}
+html[data-theme="dark"] .btn-primary{color:#1A1206;}
+html[data-theme="dark"] .icon-btn{background:var(--gray-50);color:var(--gray-900);}
+html[data-theme="dark"] .icon-btn:hover{background:var(--gray-100);}
+html[data-theme="dark"] .ai-box{background:linear-gradient(160deg,#131E2E,#101927);border-color:#24384F;color:var(--gray-700);}
+html[data-theme="dark"] .stage-pill{background:rgba(90,169,240,.14);color:var(--navy-800);border-color:rgba(90,169,240,.28);}
+html[data-theme="dark"] .empty{background:var(--gray-50);border-color:var(--gray-200);}
+html[data-theme="dark"] ::selection{background:rgba(245,166,35,.3);color:#fff;}
+
 *{box-sizing:border-box;}
-/* Lock to the light palette: without this, Chrome/Android "auto dark mode"
-   force-inverts the whole UI for users whose OS is in dark mode. */
+/* Lock out the browser's own auto-dark inversion — we ship our own dark theme above. */
 :root{color-scheme:light;}
-html{-webkit-text-size-adjust:100%;background:var(--bg);color-scheme:light;}
+html{-webkit-text-size-adjust:100%;background:var(--bg);}
+
+/* ---------- USER MENU ---------- */
+.user-btn{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.10);color:#fff;padding:6px 10px 6px 6px;border-radius:9999px;font-size:13px;font-weight:600;border:none;cursor:pointer;}
+.user-btn:hover{background:rgba(255,255,255,.18);}
+.user-avatar{width:26px;height:26px;border-radius:50%;background:var(--orange-500);color:#1A1206;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;flex-shrink:0;}
+.user-menu{position:absolute;top:56px;right:20px;z-index:60;background:var(--card);border:1px solid var(--gray-200);border-radius:14px;box-shadow:var(--shadow-lg);min-width:250px;overflow:hidden;}
+.user-menu .um-head{padding:14px 16px;border-bottom:1px solid var(--gray-200);}
+.user-menu .um-name{font-weight:700;color:var(--ink);font-size:14px;}
+.user-menu .um-mail{font-size:12px;color:var(--gray-500);margin-top:2px;word-break:break-all;}
+.user-menu .um-sec{padding:8px;}
+.user-menu .um-label{font-size:10.5px;font-weight:700;color:var(--gray-500);letter-spacing:.06em;text-transform:uppercase;padding:6px 8px 4px;}
+.user-menu .um-item{display:flex;align-items:center;gap:9px;width:100%;background:none;border:none;text-align:left;padding:9px 10px;border-radius:8px;font-size:13.5px;color:var(--ink);cursor:pointer;font-weight:500;}
+.user-menu .um-item:hover{background:var(--gray-50);}
+.user-menu .um-item.danger{color:var(--danger);}
+.user-menu .um-divider{height:1px;background:var(--gray-200);margin:4px 0;}
+.theme-seg{display:flex;gap:4px;padding:4px 8px 8px;}
+.theme-seg button{flex:1;background:var(--gray-50);border:1px solid var(--gray-200);color:var(--gray-500);font-size:12px;padding:7px 4px;border-radius:8px;cursor:pointer;font-weight:600;}
+.theme-seg button.active{background:var(--navy-900);border-color:var(--navy-900);color:#fff;}
+html[data-theme="dark"] .theme-seg button.active{color:#0B111A;}
+@media(max-width:600px){.user-menu{right:10px;left:10px;min-width:0;}}
 body{margin:0;font-family:var(--font-body);background:var(--bg);color:var(--ink);font-size:14.5px;line-height:1.5;-webkit-font-smoothing:antialiased;}
 h1,h2,h3{font-family:var(--font-display);margin:0;letter-spacing:-.025em;font-weight:800;}
 .hidden{display:none !important;}

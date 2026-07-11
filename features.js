@@ -28,7 +28,7 @@
   function loadProfile() {
     if (profile) return Promise.resolve(profile);
     // The app already knows who is logged in; ask PostgREST for the row RLS allows.
-    return api('users', { query: 'select=id,full_name,role&limit=50' }).then(function (rows) {
+    return api('users', { query: 'select=id,full_name,email,role&limit=50' }).then(function (rows) {
       if (!rows || !rows.length) return null;
       var name = (document.getElementById('whoAmI') || {}).textContent || '';
       var pill = ((document.getElementById('rolePill') || {}).textContent || '').trim().toLowerCase();
@@ -334,9 +334,119 @@
     });
   }
 
+  /* ============================================================
+     THEME (light / dark / system) — applied before paint on load
+     ============================================================ */
+  function systemDark() { return window.matchMedia('(prefers-color-scheme: dark)').matches; }
+  function getThemePref() { try { return localStorage.getItem('hireos_theme') || 'light'; } catch (e) { return 'light'; } }
+  function applyTheme(pref) {
+    var dark = pref === 'dark' || (pref === 'system' && systemDark());
+    document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+    var meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute('content', dark ? '#060B14' : '#132A54');
+  }
+  function setTheme(pref) {
+    try { localStorage.setItem('hireos_theme', pref); } catch (e) {}
+    applyTheme(pref);
+    var menu = document.getElementById('userMenu');
+    if (menu) menu.querySelectorAll('.theme-seg button').forEach(function (b) {
+      b.classList.toggle('active', b.getAttribute('data-theme') === pref);
+    });
+  }
+  applyTheme(getThemePref());
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function () {
+    if (getThemePref() === 'system') applyTheme('system');
+  });
+
+  /* ============================================================
+     USER MENU — replaces the bare "Sign out" button in the topbar
+     ============================================================ */
+  function initials(name) {
+    return String(name || '?').trim().split(/\s+/).slice(0, 2).map(function (w) { return w[0]; }).join('').toUpperCase();
+  }
+  function closeUserMenu() { var m = document.getElementById('userMenu'); if (m) m.remove(); }
+
+  function openUserMenu(anchorBtn) {
+    if (document.getElementById('userMenu')) { closeUserMenu(); return; }
+    var p = profile || {};
+    var pref = getThemePref();
+    var role = (p.role || '').toLowerCase();
+    var m = document.createElement('div');
+    m.id = 'userMenu'; m.className = 'user-menu';
+
+    var canTools = ['admin', 'recruiter', 'bd'].indexOf(role) >= 0;
+    m.innerHTML =
+      '<div class="um-head">' +
+        '<div class="um-name">' + esc(p.full_name || 'Signed in') + '</div>' +
+        '<div class="um-mail">' + esc(p.email || '') + '</div>' +
+        '<div style="margin-top:7px;"><span class="badge open" style="text-transform:uppercase;">' + esc(p.role || '') + '</span></div>' +
+      '</div>' +
+      '<div class="um-sec">' +
+        '<div class="um-label">Appearance</div>' +
+        '<div class="theme-seg">' +
+          '<button type="button" data-theme="light"' + (pref === 'light' ? ' class="active"' : '') + '>☀️ Light</button>' +
+          '<button type="button" data-theme="dark"' + (pref === 'dark' ? ' class="active"' : '') + '>🌙 Dark</button>' +
+          '<button type="button" data-theme="system"' + (pref === 'system' ? ' class="active"' : '') + '>💻 Auto</button>' +
+        '</div>' +
+        '<div class="um-divider"></div>' +
+        (canTools ? '<button type="button" class="um-item" id="umTools">⚡ <span>HireOS Tools</span></button>' : '') +
+        '<button type="button" class="um-item" id="umCareers">🌐 <span>Public career page</span></button>' +
+        '<button type="button" class="um-item" id="umRefresh">🔄 <span>Refresh data</span></button>' +
+        '<div class="um-divider"></div>' +
+        '<button type="button" class="um-item danger" id="umSignout">↩︎ <span>Sign out</span></button>' +
+      '</div>';
+    document.body.appendChild(m);
+
+    m.querySelectorAll('.theme-seg button').forEach(function (b) {
+      b.onclick = function (e) { e.stopPropagation(); setTheme(b.getAttribute('data-theme')); };
+    });
+    var t = document.getElementById('umTools');
+    if (t) t.onclick = function () { closeUserMenu(); openPanel(); };
+    document.getElementById('umCareers').onclick = function () { window.open('careers.html', '_blank'); closeUserMenu(); };
+    document.getElementById('umRefresh').onclick = function () { location.reload(); };
+    document.getElementById('umSignout').onclick = function () {
+      closeUserMenu();
+      if (typeof window.logout === 'function') window.logout(); else location.reload();
+    };
+
+    setTimeout(function () {
+      document.addEventListener('click', function onDoc(e) {
+        var menu = document.getElementById('userMenu');
+        if (menu && !menu.contains(e.target) && e.target !== anchorBtn && !anchorBtn.contains(e.target)) {
+          closeUserMenu(); document.removeEventListener('click', onDoc);
+        }
+      });
+    }, 0);
+  }
+
+  function ensureUserMenu() {
+    var bar = document.querySelector('header.topbar');
+    if (!bar || document.getElementById('userBtn')) return;
+    var appEl = document.getElementById('app');
+    if (!appEl || !appEl.classList.contains('active')) return;
+
+    loadProfile().then(function (p) {
+      if (!p || document.getElementById('userBtn')) return;
+      var right = bar.lastElementChild;               // the div holding whoAmI + Sign out
+      var signOut = Array.prototype.slice.call(bar.querySelectorAll('button'))
+        .filter(function (b) { return /sign\s*out/i.test(b.textContent); })[0];
+      var who = document.getElementById('whoAmI');
+      if (signOut) signOut.style.display = 'none';    // replaced by the menu
+      if (who) who.style.display = 'none';
+
+      var btn = document.createElement('button');
+      btn.id = 'userBtn'; btn.type = 'button'; btn.className = 'user-btn';
+      btn.innerHTML = '<span class="user-avatar">' + esc(initials(p.full_name)) + '</span>' +
+        '<span>' + esc((p.full_name || '').split(' ')[0]) + '</span><span style="opacity:.7;font-size:10px;">▾</span>';
+      btn.onclick = function (e) { e.stopPropagation(); openUserMenu(btn); };
+      (right || bar).appendChild(btn);
+    }).catch(function () {});
+  }
+
   /* ---------- boot ---------- */
   var appEl = document.getElementById('app');
-  if (appEl) new MutationObserver(ensureFab).observe(appEl, { attributes: true, attributeFilter: ['class'] });
-  setInterval(ensureFab, 3000);
-  ensureFab();
+  function boot() { ensureFab(); ensureUserMenu(); }
+  if (appEl) new MutationObserver(boot).observe(appEl, { attributes: true, attributeFilter: ['class'] });
+  setInterval(boot, 3000);
+  boot();
 })();
