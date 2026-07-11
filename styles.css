@@ -56,7 +56,10 @@
 }
 
 *{box-sizing:border-box;}
-html{-webkit-text-size-adjust:100%;}
+/* Lock to the light palette: without this, Chrome/Android "auto dark mode"
+   force-inverts the whole UI for users whose OS is in dark mode. */
+:root{color-scheme:light;}
+html{-webkit-text-size-adjust:100%;background:var(--bg);color-scheme:light;}
 body{margin:0;font-family:var(--font-body);background:var(--bg);color:var(--ink);font-size:14.5px;line-height:1.5;-webkit-font-smoothing:antialiased;}
 h1,h2,h3{font-family:var(--font-display);margin:0;letter-spacing:-.025em;font-weight:800;}
 .hidden{display:none !important;}
