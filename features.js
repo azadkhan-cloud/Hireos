@@ -10,6 +10,52 @@
   function ready() { return typeof window.rest === 'function'; }
   function api(table, opts) { return window.rest(table, opts || {}); }
 
+  /* ------------------------------------------------------------------
+     Session-expiry guard.
+     The app holds its access token in memory and does not refresh it, so
+     after ~1h every request fails with a raw "JWT expired" PostgREST error
+     that leaks into the UI. Until the token refresh is added to app.js,
+     catch that state once and show a clean re-login prompt instead.
+     ------------------------------------------------------------------ */
+  var expiredShown = false;
+  function isExpiredSession(err) {
+    var s = String((err && (err.message || err)) || '');
+    return /jwt expired|PGRST303|\b401\b/i.test(s);
+  }
+  function showSessionExpired() {
+    if (expiredShown || document.getElementById('fxExpired')) return;
+    expiredShown = true;
+    var d = document.createElement('div');
+    d.id = 'fxExpired';
+    d.style.cssText = 'position:fixed;inset:0;z-index:2000;background:rgba(10,26,51,.72);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;padding:20px;';
+    d.innerHTML = '<div style="background:var(--card,#fff);color:var(--ink,#212121);border-radius:16px;padding:30px;max-width:380px;width:100%;box-shadow:0 25px 60px rgba(0,0,0,.4);text-align:center;">' +
+      '<div style="font-size:34px;margin-bottom:10px;">🔒</div>' +
+      '<h3 style="margin:0 0 8px;color:var(--navy-900,#0B57A4);font-size:19px;">Session expired</h3>' +
+      '<p style="margin:0 0 20px;font-size:14px;color:var(--gray-500,#757575);line-height:1.5;">' +
+      'You have been signed out for security. Please sign in again to continue — nothing you saved has been lost.</p>' +
+      '<button type="button" id="fxReauth" style="width:100%;background:var(--orange-500,#F5A623);color:#1A1206;border:none;padding:12px;border-radius:8px;font-weight:700;font-size:14.5px;cursor:pointer;">Sign in again</button>' +
+      '</div>';
+    document.body.appendChild(d);
+    document.getElementById('fxReauth').onclick = function () { location.reload(); };
+  }
+
+  // Watch the app's own requests: if PostgREST starts rejecting them because the
+  // token died, surface the friendly prompt instead of a raw error string.
+  function installGuard() {
+    if (!ready() || window.__fxGuarded) return;
+    window.__fxGuarded = true;
+    var orig = window.rest;
+    window.rest = function () {
+      var p;
+      try { p = orig.apply(this, arguments); } catch (e) { if (isExpiredSession(e)) showSessionExpired(); throw e; }
+      return (p && p.catch) ? p.catch(function (e) {
+        if (isExpiredSession(e)) showSessionExpired();
+        throw e;
+      }) : p;
+    };
+  }
+  installGuard();
+
   function esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
@@ -616,7 +662,7 @@
 
   /* ---------- boot ---------- */
   var appEl = document.getElementById('app');
-  function boot() { ensureFab(); ensureUserMenu(); }
+  function boot() { installGuard(); ensureFab(); ensureUserMenu(); }
   if (appEl) new MutationObserver(boot).observe(appEl, { attributes: true, attributeFilter: ['class'] });
   setInterval(boot, 3000);
   boot();
