@@ -660,9 +660,315 @@
     }).catch(function () {});
   }
 
+  /* ============================================================
+     CLIENT PORTAL — added sections
+     Interviews · Compare candidates · Structured feedback · Offer approval
+     Rendered into the client's page without touching app.js.
+     ============================================================ */
+  var cpCss = document.createElement('style');
+  cpCss.textContent =
+    '.cp-wrap{max-width:1200px;margin:0 auto;padding:0 26px 40px;}' +
+    '.cp-tabs{display:flex;gap:2px;border-bottom:1px solid var(--gray-200,#E0E0E0);margin:26px 0 18px;overflow-x:auto;}' +
+    '.cp-tabs button{background:none;border:none;color:var(--gray-500,#757575);padding:11px 14px;border-bottom:2px solid transparent;font-size:14px;cursor:pointer;font-weight:600;white-space:nowrap;}' +
+    '.cp-tabs button.active{color:var(--navy-900,#0B57A4);border-bottom-color:var(--orange-500,#F5A623);font-weight:700;}' +
+    '.cp-tbl{width:100%;border-collapse:collapse;background:var(--card,#fff);border:1px solid var(--gray-200,#E0E0E0);border-radius:12px;overflow:hidden;}' +
+    '.cp-tbl th,.cp-tbl td{padding:12px 14px;text-align:left;border-bottom:1px solid var(--gray-200,#E0E0E0);font-size:13.5px;vertical-align:top;}' +
+    '.cp-tbl th{background:var(--gray-50,#FAFAFA);font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--gray-500,#757575);font-weight:800;}' +
+    '.cp-tbl tr:last-child td{border-bottom:none;}' +
+    '.cp-tbl td.name{font-weight:700;color:var(--navy-900,#0B57A4);}' +
+    '.cp-score{display:inline-flex;align-items:center;justify-content:center;min-width:38px;padding:3px 8px;border-radius:9999px;font-weight:800;font-size:12px;}' +
+    '.cp-score.hi{background:var(--success-bg,#E4F5EC);color:var(--success,#1E8E5A);}' +
+    '.cp-score.mid{background:var(--warning-bg,#FCEFDD);color:var(--warning,#B4530E);}' +
+    '.cp-score.lo{background:var(--gray-100,#F5F5F5);color:var(--gray-500,#757575);}' +
+    '.cp-stars{display:flex;gap:3px;}' +
+    '.cp-stars button{background:none;border:none;cursor:pointer;font-size:19px;line-height:1;padding:0;filter:grayscale(1);opacity:.35;transition:all .12s;}' +
+    '.cp-stars button.on{filter:none;opacity:1;}' +
+    '.cp-stars button:hover{transform:scale(1.15);}';
+  document.head.appendChild(cpCss);
+
+  var cpTab = 'interviews';
+  var CP_TABS = [
+    ['interviews', '📅 Interviews'],
+    ['compare', '⚖️ Compare candidates'],
+    ['feedback', '📝 Give feedback'],
+    ['offers', '📄 Offer approvals']
+  ];
+
+  function ensureClientPortal() {
+    var app = document.getElementById('app');
+    if (!app || !app.classList.contains('active') || !ready()) return;
+    if (document.getElementById('cpRoot')) return;
+    loadProfile().then(function (p) {
+      if (!p || p.role !== 'client') return;
+      buildClientPortal();
+    }).catch(function () {});
+  }
+
+  function buildClientPortal() {
+    var main = document.getElementById('mainContent');
+    if (!main || document.getElementById('cpRoot')) return;
+
+    var root = document.createElement('div');
+    root.id = 'cpRoot'; root.className = 'cp-wrap';
+    root.innerHTML =
+      '<div class="section-title" style="margin-top:34px;"><h2>Hiring workspace</h2></div>' +
+      '<div class="cp-tabs">' + CP_TABS.map(function (t) {
+        return '<button type="button" data-cp="' + t[0] + '">' + t[1] + '</button>';
+      }).join('') + '</div>' +
+      '<div id="cpBody">Loading…</div>';
+    main.appendChild(root);
+    root.querySelectorAll('.cp-tabs button').forEach(function (b) {
+      b.onclick = function () { cpTab = b.getAttribute('data-cp'); cpRender(); };
+    });
+    cpRender();
+  }
+  function cpBody() { return document.getElementById('cpBody'); }
+  function cpRender() {
+    document.querySelectorAll('.cp-tabs button').forEach(function (b) {
+      b.classList.toggle('active', b.getAttribute('data-cp') === cpTab);
+    });
+    if (cpTab === 'interviews') cpInterviews();
+    else if (cpTab === 'compare') cpCompare();
+    else if (cpTab === 'feedback') cpFeedback();
+    else cpOffers();
+  }
+
+  /* --- shared: this client's applications with candidate + req --- */
+  function cpApps() {
+    return api('applications', { query:
+      'select=id,current_stage,ai_match_score,ai_match_detail,client_feedback,client_feedback_note,client_rating,' +
+      'candidates(full_name,experience_yrs,current_ctc,expected_ctc,notice_period_days,location,skills,current_designation),' +
+      'requisitions(title)&order=created_at.desc' });
+  }
+  function scoreCls(s) { return s == null ? 'lo' : s >= 75 ? 'hi' : s >= 55 ? 'mid' : 'lo'; }
+
+  /* --- 1. INTERVIEWS --- */
+  function cpInterviews() {
+    cpBody().innerHTML = 'Loading interviews…';
+    api('interviews', { query:
+      'order=scheduled_at.asc&select=id,round,round_type,scheduled_at,mode,interviewer_name,status,rating,recommendation,' +
+      'applications(candidates(full_name),requisitions(title))' })
+      .then(function (rows) {
+        if (!rows || !rows.length) {
+          cpBody().innerHTML = '<div class="empty">No interviews scheduled yet.<br/>Once you request an interview on a candidate, your recruiter will schedule it and it will appear here.</div>';
+          return;
+        }
+        var now = Date.now();
+        var up = rows.filter(function (r) { return r.status === 'scheduled' && new Date(r.scheduled_at) >= now; });
+        var past = rows.filter(function (r) { return up.indexOf(r) < 0; });
+        function block(list, title) {
+          if (!list.length) return '';
+          return '<div style="font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--gray-500,#757575);margin:14px 0 8px;">' + title + '</div>' +
+            list.map(function (iv) {
+              var a = iv.applications || {}, c = a.candidates || {}, r = a.requisitions || {};
+              var when = iv.scheduled_at ? new Date(iv.scheduled_at).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) : 'To be scheduled';
+              var badge = iv.status === 'completed' ? '<span class="badge open">completed</span>'
+                : iv.status === 'cancelled' ? '<span class="badge closed">cancelled</span>'
+                : '<span class="badge on_hold">scheduled</span>';
+              return '<div class="card"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;">' +
+                '<div><div class="req-title">' + esc(c.full_name) + ' — ' + esc(r.title) + '</div>' +
+                '<div class="meta-row">' + esc(when) + ' · ' + esc(iv.mode || '') + ' · Round ' + iv.round + ' ' + esc(iv.round_type || '') +
+                (iv.interviewer_name ? ' · Interviewer: ' + esc(iv.interviewer_name) : '') + '</div>' +
+                (iv.rating ? '<div class="meta-row">Your rating: ' + '★'.repeat(iv.rating) + ' · ' + esc(iv.recommendation || '') + '</div>' : '') +
+                '</div><div>' + badge + '</div></div></div>';
+            }).join('');
+        }
+        cpBody().innerHTML = block(up, 'Upcoming') + block(past, 'Past interviews');
+      })
+      .catch(function (e) { cpBody().innerHTML = '<div class="empty">Could not load interviews: ' + esc(String(e.message || e)).slice(0, 160) + '</div>'; });
+  }
+
+  /* --- 2. COMPARE CANDIDATES --- */
+  function cpCompare() {
+    cpBody().innerHTML = 'Loading candidates…';
+    cpApps().then(function (apps) {
+      if (!apps || !apps.length) {
+        cpBody().innerHTML = '<div class="empty">No candidates submitted yet.</div>'; return;
+      }
+      var byReq = {};
+      apps.forEach(function (a) {
+        var t = (a.requisitions && a.requisitions.title) || 'Other';
+        (byReq[t] = byReq[t] || []).push(a);
+      });
+      cpBody().innerHTML = Object.keys(byReq).map(function (title) {
+        var list = byReq[title].slice().sort(function (x, y) { return (y.ai_match_score || 0) - (x.ai_match_score || 0); });
+        return '<div style="margin-bottom:26px;">' +
+          '<div style="font-weight:800;color:var(--navy-900,#0B57A4);margin-bottom:10px;font-size:16px;">' + esc(title) +
+          ' <span style="font-weight:500;color:var(--gray-500,#757575);font-size:13px;">· ' + list.length + ' candidate(s)</span></div>' +
+          '<div style="overflow-x:auto;"><table class="cp-tbl"><thead><tr>' +
+          '<th>Candidate</th><th>Match</th><th>Exp</th><th>Current → Expected</th><th>Notice</th><th>Location</th><th>Stage</th><th>Your view</th>' +
+          '</tr></thead><tbody>' +
+          list.map(function (a) {
+            var c = a.candidates || {};
+            var fb = a.client_feedback === 'interested' ? '<span class="badge open">interested</span>'
+              : a.client_feedback === 'not_interested' ? '<span class="badge closed">not interested</span>'
+              : a.client_feedback === 'request_interview' ? '<span class="badge on_hold">interview requested</span>'
+              : '<span class="badge draft">no response</span>';
+            return '<tr>' +
+              '<td class="name">' + esc(c.full_name) + (c.current_designation ? '<div style="font-weight:400;color:var(--gray-500,#757575);font-size:12px;margin-top:2px;">' + esc(c.current_designation) + '</div>' : '') + '</td>' +
+              '<td><span class="cp-score ' + scoreCls(a.ai_match_score) + '">' + (a.ai_match_score != null ? a.ai_match_score : '—') + '</span></td>' +
+              '<td>' + (c.experience_yrs != null ? esc(c.experience_yrs) + ' yrs' : '—') + '</td>' +
+              '<td>' + (c.current_ctc != null ? '₹' + esc(c.current_ctc) : '—') + ' → ' + (c.expected_ctc != null ? '<b>₹' + esc(c.expected_ctc) + '</b>' : '—') + '</td>' +
+              '<td>' + (c.notice_period_days != null ? esc(c.notice_period_days) + 'd' : '—') + '</td>' +
+              '<td>' + esc(c.location || '—') + '</td>' +
+              '<td><span class="stage-pill">' + esc(a.current_stage) + '</span></td>' +
+              '<td>' + fb + (a.client_rating ? '<div style="margin-top:3px;">' + '★'.repeat(a.client_rating) + '</div>' : '') + '</td>' +
+              '</tr>';
+          }).join('') + '</tbody></table></div></div>';
+      }).join('');
+    }).catch(function (e) { cpBody().innerHTML = '<div class="empty">Could not load: ' + esc(String(e.message || e)).slice(0, 160) + '</div>'; });
+  }
+
+  /* --- 3. STRUCTURED FEEDBACK --- */
+  var REJECT_REASONS = ['Experience not relevant', 'Compensation mismatch', 'Notice period too long',
+    'Location mismatch', 'Skills gap', 'Overqualified', 'Better candidates available', 'Other'];
+
+  function cpFeedback() {
+    cpBody().innerHTML = 'Loading…';
+    cpApps().then(function (apps) {
+      var pend = (apps || []).filter(function (a) {
+        return ['Rejected', 'Joined', 'Placed'].indexOf(a.current_stage) < 0;
+      });
+      if (!pend.length) { cpBody().innerHTML = '<div class="empty">No candidates awaiting your feedback.</div>'; return; }
+      cpBody().innerHTML = pend.map(function (a, i) {
+        var c = a.candidates || {}, r = a.requisitions || {};
+        var rating = a.client_rating || 0;
+        return '<div class="card" data-app="' + a.id + '">' +
+          '<div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;">' +
+            '<div><div class="req-title">' + esc(c.full_name) + ' — ' + esc(r.title) + '</div>' +
+            '<div class="meta-row">' + (c.experience_yrs != null ? esc(c.experience_yrs) + ' yrs' : '') +
+              (c.expected_ctc != null ? ' · expects ₹' + esc(c.expected_ctc) + ' LPA' : '') +
+              (c.notice_period_days != null ? ' · notice ' + esc(c.notice_period_days) + 'd' : '') +
+              (a.ai_match_score != null ? ' · <span class="cp-score ' + scoreCls(a.ai_match_score) + '">' + a.ai_match_score + '</span>' : '') +
+            '</div></div>' +
+            '<span class="stage-pill">' + esc(a.current_stage) + '</span>' +
+          '</div>' +
+          '<div style="margin-top:14px;display:flex;gap:20px;flex-wrap:wrap;align-items:center;">' +
+            '<div><div style="font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--gray-500,#757575);margin-bottom:5px;">Your rating</div>' +
+            '<div class="cp-stars" data-stars="' + i + '">' +
+              [1,2,3,4,5].map(function(n){ return '<button type="button" data-n="'+n+'" class="'+(n<=rating?'on':'')+'">⭐</button>'; }).join('') +
+            '</div></div>' +
+            '<div style="flex:1;min-width:220px;"><div style="font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--gray-500,#757575);margin-bottom:5px;">Decision</div>' +
+            '<select data-dec="' + i + '" style="padding:9px 11px;">' +
+              '<option value="">— select —</option>' +
+              '<option value="request_interview"' + (a.client_feedback==='request_interview'?' selected':'') + '>Interview this candidate</option>' +
+              '<option value="interested"' + (a.client_feedback==='interested'?' selected':'') + '>Interested — keep in play</option>' +
+              '<option value="not_interested"' + (a.client_feedback==='not_interested'?' selected':'') + '>Not interested — reject</option>' +
+            '</select></div>' +
+          '</div>' +
+          '<div data-reason="' + i + '" style="margin-top:12px;display:' + (a.client_feedback==='not_interested'?'block':'none') + ';">' +
+            '<div style="font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--gray-500,#757575);margin-bottom:5px;">Reason for rejection</div>' +
+            '<select data-rsn="' + i + '" style="padding:9px 11px;">' +
+              '<option value="">— select a reason —</option>' +
+              REJECT_REASONS.map(function(x){ return '<option>'+esc(x)+'</option>'; }).join('') +
+            '</select>' +
+          '</div>' +
+          '<div style="margin-top:12px;">' +
+            '<div style="font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--gray-500,#757575);margin-bottom:5px;">Comments (shared with your recruiter)</div>' +
+            '<textarea data-note="' + i + '" rows="2" style="width:100%;padding:10px 12px;">' + esc(a.client_feedback_note || '') + '</textarea>' +
+          '</div>' +
+          '<button type="button" class="btn-primary" data-save="' + i + '" style="width:auto;margin-top:12px;padding:9px 22px;">Save feedback</button>' +
+          '</div>';
+      }).join('');
+
+      // interactions
+      var state = pend.map(function (a) { return { rating: a.client_rating || 0 }; });
+      cpBody().querySelectorAll('[data-stars]').forEach(function (box) {
+        var i = +box.getAttribute('data-stars');
+        box.querySelectorAll('button').forEach(function (b) {
+          b.onclick = function () {
+            state[i].rating = +b.getAttribute('data-n');
+            box.querySelectorAll('button').forEach(function (x) {
+              x.classList.toggle('on', +x.getAttribute('data-n') <= state[i].rating);
+            });
+          };
+        });
+      });
+      cpBody().querySelectorAll('[data-dec]').forEach(function (sel) {
+        var i = +sel.getAttribute('data-dec');
+        sel.onchange = function () {
+          var box = cpBody().querySelector('[data-reason="' + i + '"]');
+          if (box) box.style.display = sel.value === 'not_interested' ? 'block' : 'none';
+        };
+      });
+      cpBody().querySelectorAll('[data-save]').forEach(function (btn) {
+        btn.onclick = function () {
+          var i = +btn.getAttribute('data-save'), a = pend[i];
+          var dec = cpBody().querySelector('[data-dec="' + i + '"]').value;
+          var rsn = (cpBody().querySelector('[data-rsn="' + i + '"]') || {}).value || '';
+          var note = cpBody().querySelector('[data-note="' + i + '"]').value;
+          if (!dec) { say('Please choose a decision first.'); return; }
+          if (dec === 'not_interested' && !rsn) { say('Please select a rejection reason.'); return; }
+          btn.disabled = true; btn.textContent = 'Saving…';
+          var fullNote = (rsn ? 'Reason: ' + rsn + (note ? ' — ' : '') : '') + note;
+          api('applications', { method: 'PATCH', query: 'id=eq.' + a.id, body: {
+            client_feedback: dec,
+            client_feedback_note: fullNote || null,
+            client_rating: state[i].rating || null,
+            client_feedback_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          }}).then(function () { say('Feedback sent to your recruiter'); cpFeedback(); })
+            .catch(function (e) { say('Failed: ' + String(e.message || e).slice(0, 120)); btn.disabled = false; btn.textContent = 'Save feedback'; });
+        };
+      });
+    }).catch(function (e) { cpBody().innerHTML = '<div class="empty">Could not load: ' + esc(String(e.message || e)).slice(0, 160) + '</div>'; });
+  }
+
+  /* --- 4. OFFER APPROVALS --- */
+  function cpOffers() {
+    cpBody().innerHTML = 'Loading offers…';
+    api('offers', { query: 'select=id,ctc_annual,joining_date,status,client_approval,client_approval_note,applications(candidates(full_name),requisitions(title))&order=created_at.desc' })
+      .then(function (rows) {
+        if (!rows || !rows.length) {
+          cpBody().innerHTML = '<div class="empty">No offers to approve.<br/>When your recruiter prepares an offer, it will appear here for your sign-off.</div>';
+          return;
+        }
+        cpBody().innerHTML = rows.map(function (o, i) {
+          var a = o.applications || {}, c = a.candidates || {}, r = a.requisitions || {};
+          var ap = o.client_approval || 'pending';
+          var badge = ap === 'approved' ? '<span class="badge open">approved by you</span>'
+            : ap === 'changes_requested' ? '<span class="badge on_hold">changes requested</span>'
+            : '<span class="badge draft">awaiting your approval</span>';
+          return '<div class="card">' +
+            '<div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;">' +
+              '<div><div class="req-title">' + esc(c.full_name) + ' — ' + esc(r.title) + '</div>' +
+              '<div class="meta-row">Proposed CTC: <b>₹' + esc(o.ctc_annual || '—') + ' LPA</b>' +
+                (o.joining_date ? ' · Joining: <b>' + esc(o.joining_date) + '</b>' : '') +
+                ' · Offer status: ' + esc(o.status) + '</div>' +
+                (o.client_approval_note ? '<div class="meta-row">Your note: ' + esc(o.client_approval_note) + '</div>' : '') +
+              '</div>' + badge +
+            '</div>' +
+            (ap === 'pending' ? '<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">' +
+              '<button type="button" class="btn-primary" data-ok="' + i + '" style="width:auto;padding:9px 20px;margin:0;">✅ Approve offer</button>' +
+              '<button type="button" class="icon-btn" data-chg="' + i + '">✏️ Request changes</button>' +
+            '</div>' : '') +
+            '</div>';
+        }).join('');
+
+        cpBody().querySelectorAll('button').forEach(function (btn) {
+          btn.onclick = function () {
+            var i = +(btn.getAttribute('data-ok') || btn.getAttribute('data-chg'));
+            var o = rows[i], approve = btn.hasAttribute('data-ok');
+            var note = prompt(approve ? 'Any note for your recruiter? (optional)' : 'What needs to change? (CTC, joining date…)', '');
+            if (note === null) return;
+            if (!approve && !note.trim()) { say('Please describe the change you need.'); return; }
+            btn.disabled = true;
+            api('offers', { method: 'PATCH', query: 'id=eq.' + o.id, body: {
+              client_approval: approve ? 'approved' : 'changes_requested',
+              client_approval_note: note || null,
+              client_approval_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            }}).then(function () { say(approve ? 'Offer approved' : 'Change request sent'); cpOffers(); })
+              .catch(function (e) { say('Failed: ' + String(e.message || e).slice(0, 120)); cpOffers(); });
+          };
+        });
+      })
+      .catch(function (e) { cpBody().innerHTML = '<div class="empty">Could not load offers: ' + esc(String(e.message || e)).slice(0, 160) + '</div>'; });
+  }
+
   /* ---------- boot ---------- */
   var appEl = document.getElementById('app');
-  function boot() { installGuard(); ensureFab(); ensureUserMenu(); }
+  function boot() { installGuard(); ensureFab(); ensureUserMenu(); ensureClientPortal(); }
   if (appEl) new MutationObserver(boot).observe(appEl, { attributes: true, attributeFilter: ['class'] });
   setInterval(boot, 3000);
   boot();
