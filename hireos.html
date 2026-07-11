@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="color-scheme" content="light" />
+<meta name="theme-color" content="#0A1A33" />
+<title>HireOS — AI Recruitment Operating System | WorkSource</title>
+<meta name="description" content="HireOS is an AI-powered recruitment operating system: ATS, BD/CRM, client and candidate portals, AI matching, offers, onboarding and billing — in one platform." />
+<meta property="og:title" content="HireOS — AI Recruitment Operating System" />
+<meta property="og:description" content="ATS + CRM + portals + AI + billing. The platform WorkSource runs its own desk on." />
+<link rel="stylesheet" href="site.css" />
+<style>
+  .feat{display:flex;gap:14px;align-items:flex-start;padding:20px;background:#fff;border:1px solid var(--gray-200);border-radius:var(--radius);transition:all .18s var(--ease);}
+  .feat:hover{border-color:var(--navy-700);box-shadow:var(--shadow-sm);}
+  .feat .e{font-size:22px;flex-shrink:0;}
+  .feat b{color:var(--navy-950);display:block;margin-bottom:4px;font-size:15px;}
+  .feat span{color:var(--gray-500);font-size:14px;}
+  .cmp{width:100%;border-collapse:collapse;margin-top:36px;background:#fff;border:1px solid var(--gray-200);border-radius:var(--radius-lg);overflow:hidden;}
+  .cmp th,.cmp td{padding:14px 18px;text-align:left;border-bottom:1px solid var(--gray-200);font-size:14.5px;}
+  .cmp th{background:var(--gray-50);font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--gray-500);font-weight:800;}
+  .cmp td:first-child{font-weight:600;color:var(--navy-950);}
+  .cmp tr:last-child td{border-bottom:none;}
+  .yes{color:var(--success);font-weight:800;}
+  .no{color:var(--gray-300);font-weight:800;}
+  .modline{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px dashed var(--gray-200);font-size:14.5px;color:var(--gray-700);}
+  .modline:last-child{border-bottom:none;}
+  .modline .n{width:26px;height:26px;border-radius:8px;background:var(--navy-900);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0;}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <a href="home.html" class="brand">
+      <span class="mark">W</span>
+      <span>WorkSource<small>Recruitment Partners</small></span>
+    </a>
+    <div class="navlinks" id="navlinks">
+      <a href="home.html">Agency</a>
+      <a href="#modules">Modules</a>
+      <a href="#ai">AI</a>
+      <a href="#compare">Compare</a>
+      <a href="#demo" class="btn btn-primary btn-sm">Request a demo</a>
+    </div>
+    <button class="navtoggle" onclick="document.getElementById('navlinks').classList.toggle('open')">☰</button>
+  </div>
+</nav>
+
+<!-- ============ HERO ============ -->
+<header class="hero">
+  <div class="wrap">
+    <div>
+      <div class="eyebrow">● Recruitment Operating System</div>
+      <h1>Your whole recruitment desk,<br/><span class="accent">in one system.</span></h1>
+      <p class="lead">
+        HireOS runs business development, sourcing, screening, interviews, offers, onboarding and invoicing
+        in a single platform — with AI at every step. Built by a recruitment agency, for recruitment agencies,
+        staffing firms and in-house HR teams.
+      </p>
+      <div class="cta">
+        <a href="#demo" class="btn btn-primary">Request a demo →</a>
+        <a href="#modules" class="btn btn-ghost">See the modules</a>
+      </div>
+      <div class="hero-stats">
+        <div><div class="n">10+</div><div class="l">AI touchpoints</div></div>
+        <div><div class="n">4</div><div class="l">Role-based portals</div></div>
+        <div><div class="n">1</div><div class="l">Platform, not five tools</div></div>
+      </div>
+    </div>
+
+    <div class="glass">
+      <h4>🚀 What ships out of the box</h4>
+      <div style="display:flex;flex-direction:column;gap:0;">
+        <div class="row"><div><div class="t">ATS &amp; pipeline</div><div class="s">Sourced → Placed, SLA-tracked</div></div><span class="chip g">core</span></div>
+        <div class="row"><div><div class="t">BD / CRM pipeline</div><div class="s">Leads, AI research, pitch emails</div></div><span class="chip a">rare</span></div>
+        <div class="row"><div><div class="t">Client &amp; candidate portals</div><div class="s">Feedback, slots, messaging</div></div><span class="chip a">rare</span></div>
+        <div class="row"><div><div class="t">Offers &amp; onboarding</div><div class="s">Letters, BGV, joining checklist</div></div><span class="chip b">new</span></div>
+        <div class="row"><div><div class="t">Placements &amp; invoicing</div><div class="s">Fee, GST, guarantee follow-ups</div></div><span class="chip a">rare</span></div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ============ PROBLEM ============ -->
+<section>
+  <div class="wrap center">
+    <div class="slabel">The problem</div>
+    <h2>Most recruitment desks run on five disconnected tools</h2>
+    <p class="sub">A spreadsheet for the pipeline. A CRM for clients. Email for candidates. WhatsApp for feedback. Tally for invoices. Nothing talks to anything — so nothing is ever really visible.</p>
+
+    <div class="grid g4" style="margin-top:44px;">
+      <div class="card"><div class="ico">🧩</div><h3>Fragmented data</h3><p>The same candidate exists in four places, and none of them agree.</p></div>
+      <div class="card"><div class="ico">🕳️</div><h3>Pipelines go quiet</h3><p>Candidates sit untouched for a week and nobody notices until the client asks.</p></div>
+      <div class="card"><div class="ico">📧</div><h3>Status-update tax</h3><p>Recruiters spend their week telling clients what the system should be showing them.</p></div>
+      <div class="card"><div class="ico">💸</div><h3>Revenue leaks</h3><p>Placements made, invoices forgotten, guarantee follow-ups missed.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ MODULES ============ -->
+<section class="alt" id="modules">
+  <div class="wrap">
+    <div class="slabel">Modules</div>
+    <h2>One system, end to end</h2>
+    <p class="sub">From a cold lead to a paid invoice — without leaving the platform.</p>
+
+    <div class="grid g2" style="margin-top:44px;">
+      <div class="card">
+        <div class="ico">🎯</div>
+        <h3>Business Development (CRM)</h3>
+        <p style="margin-bottom:14px;">Most ATS products stop at the job. HireOS starts before it.</p>
+        <div class="modline"><span class="n">1</span> Lead pipeline with weighted deal value</div>
+        <div class="modline"><span class="n">2</span> AI company research on any prospect</div>
+        <div class="modline"><span class="n">3</span> Decision-maker finder + AI pitch emails</div>
+        <div class="modline"><span class="n">4</span> Won/lost tracking, auto-converts to a client</div>
+      </div>
+
+      <div class="card">
+        <div class="ico">📋</div>
+        <h3>Applicant Tracking (ATS)</h3>
+        <p style="margin-bottom:14px;">A pipeline that tells you when it's stuck.</p>
+        <div class="modline"><span class="n">1</span> 11-stage pipeline, Sourced → Placed</div>
+        <div class="modline"><span class="n">2</span> SLA clock per stage, breach alerts by name</div>
+        <div class="modline"><span class="n">3</span> Bulk actions, CSV import/export</div>
+        <div class="modline"><span class="n">4</span> Full activity log on every record</div>
+      </div>
+
+      <div class="card">
+        <div class="ico">👥</div>
+        <h3>Client &amp; Candidate Portals</h3>
+        <p style="margin-bottom:14px;">Stop being the middleman for every message.</p>
+        <div class="modline"><span class="n">1</span> Clients review candidates and give feedback</div>
+        <div class="modline"><span class="n">2</span> Candidates pick their own interview slots</div>
+        <div class="modline"><span class="n">3</span> Two-way messaging, in-app</div>
+        <div class="modline"><span class="n">4</span> Client identity masked from candidates until you reveal it</div>
+      </div>
+
+      <div class="card">
+        <div class="ico">🚀</div>
+        <h3>Offers, Onboarding &amp; Billing</h3>
+        <p style="margin-bottom:14px;">The part every other ATS forgets.</p>
+        <div class="modline"><span class="n">1</span> AI-generated offer letters, accept/decline tracked</div>
+        <div class="modline"><span class="n">2</span> 14-item joining checklist + BGV status</div>
+        <div class="modline"><span class="n">3</span> Placement → invoice with fee % and GST</div>
+        <div class="modline"><span class="n">4</span> 30/60/90-day guarantee follow-ups, scheduled</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ AI ============ -->
+<section id="ai">
+  <div class="wrap">
+    <div class="slabel">AI, where it earns its keep</div>
+    <h2>Not an "AI" badge. Ten working touchpoints.</h2>
+    <p class="sub">Every one of these runs on Claude, inside the workflow — not in a separate chatbot you have to remember to open.</p>
+
+    <div class="grid g2" style="margin-top:40px;gap:12px;">
+      <div class="feat"><span class="e">🎯</span><div><b>Candidate match scoring</b><span>Scores each candidate against the JD, with a written rationale you can defend to a client.</span></div></div>
+      <div class="feat"><span class="e">📝</span><div><b>JD generation</b><span>Turns a rough brief — or an uploaded file — into a structured job description.</span></div></div>
+      <div class="feat"><span class="e">📄</span><div><b>Resume parsing &amp; autofill</b><span>Reads a CV and fills the candidate record: skills, CTC, notice, experience.</span></div></div>
+      <div class="feat"><span class="e">🔍</span><div><b>Sourcing toolkit</b><span>Boolean strings, X-ray searches and job-ad copy, generated per role.</span></div></div>
+      <div class="feat"><span class="e">🏢</span><div><b>Company research</b><span>Researches a prospect before a BD call, so you walk in informed.</span></div></div>
+      <div class="feat"><span class="e">✉️</span><div><b>Pitch &amp; status emails</b><span>Drafts outreach to decision-makers and status updates to clients.</span></div></div>
+      <div class="feat"><span class="e">🎤</span><div><b>Interview prep</b><span>Role-specific question sets built from the JD and the candidate's profile.</span></div></div>
+      <div class="feat"><span class="e">📊</span><div><b>Automated daily digest</b><span>Every morning at 8am: pipeline, SLA breaches, interviews, leads — with a written summary and one recommended action.</span></div></div>
+      <div class="feat"><span class="e">📜</span><div><b>Offer letters</b><span>Generates a professional offer letter from the role, CTC and joining date.</span></div></div>
+      <div class="feat"><span class="e">💬</span><div><b>Candidate FAQ</b><span>Answers candidate questions in their portal, so recruiters aren't answering the same thing twenty times.</span></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ COMPARE ============ -->
+<section class="alt" id="compare">
+  <div class="wrap">
+    <div class="slabel">Where it fits</div>
+    <h2>Built for agencies, not adapted for them</h2>
+    <p class="sub">Most ATS products are designed for a corporate HR team hiring for itself. Agency work is a different business — and it needs the CRM and the billing, not just the pipeline.</p>
+
+    <table class="cmp">
+      <thead>
+        <tr><th>Capability</th><th>Typical ATS</th><th>HireOS</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Applicant pipeline &amp; stages</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+        <tr><td>AI candidate matching</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+        <tr><td>Interview scheduling</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+        <tr><td>Offers &amp; onboarding checklist</td><td class="no">partial</td><td class="yes">✓</td></tr>
+        <tr><td>Business development / lead CRM</td><td class="no">✗</td><td class="yes">✓</td></tr>
+        <tr><td>Client portal with feedback &amp; slots</td><td class="no">✗</td><td class="yes">✓</td></tr>
+        <tr><td>Client-name masking from candidates</td><td class="no">✗</td><td class="yes">✓</td></tr>
+        <tr><td>Placement fees, GST invoicing</td><td class="no">✗</td><td class="yes">✓</td></tr>
+        <tr><td>Guarantee-period follow-ups</td><td class="no">✗</td><td class="yes">✓</td></tr>
+        <tr><td>Automated daily ops digest</td><td class="no">✗</td><td class="yes">✓</td></tr>
+      </tbody>
+    </table>
+    <p style="color:var(--gray-500);font-size:13px;margin-top:14px;">Comparison reflects capabilities commonly found in general-purpose ATS products; specific vendors vary.</p>
+  </div>
+</section>
+
+<!-- ============ DEMO ============ -->
+<section id="demo">
+  <div class="wrap">
+    <div class="grid g2" style="margin-top:0;align-items:start;gap:44px;">
+      <div>
+        <div class="slabel">See it live</div>
+        <h2>Request a demo</h2>
+        <p class="sub" style="margin-bottom:24px;">
+          We'll walk you through the platform on a live desk — real pipeline, real AI scoring, real invoicing.
+          Tell us a bit about your team and we'll set up a time.
+        </p>
+        <div style="display:flex;flex-direction:column;gap:14px;">
+          <div style="display:flex;gap:11px;align-items:flex-start;"><span style="font-size:19px;">🧭</span><div><b style="color:var(--navy-950);">Walkthrough, not a slide deck</b><div style="color:var(--gray-500);font-size:14.5px;">We show the actual system we run our own agency on.</div></div></div>
+          <div style="display:flex;gap:11px;align-items:flex-start;"><span style="font-size:19px;">🔧</span><div><b style="color:var(--navy-950);">Configurable to your process</b><div style="color:var(--gray-500);font-size:14.5px;">Stages, SLAs, hiring categories and fee models are all configurable.</div></div></div>
+          <div style="display:flex;gap:11px;align-items:flex-start;"><span style="font-size:19px;">🔐</span><div><b style="color:var(--navy-950);">Role-based access</b><div style="color:var(--gray-500);font-size:14.5px;">Admin, BD, recruiter, client and candidate — each sees only their own world.</div></div></div>
+        </div>
+      </div>
+
+      <div class="formcard">
+        <h3 style="font-size:20px;color:var(--navy-950);">Book a HireOS demo</h3>
+        <p style="color:var(--gray-500);font-size:14px;margin-top:6px;">Fields marked * are required.</p>
+        <form id="demoForm" onsubmit="return submitDemo(event)">
+          <input class="hp" id="website" tabindex="-1" autocomplete="off" />
+          <label>Company name *</label>
+          <input id="d_company" required maxlength="160" />
+          <div class="f2">
+            <div><label>Your name *</label><input id="d_name" required maxlength="120" /></div>
+            <div><label>Sector</label>
+              <select id="d_segment">
+                <option>Construction/EPC</option><option>BFSI</option><option>Manufacturing</option>
+                <option>Healthcare</option><option>Pharma</option><option>Logistics</option>
+                <option selected>Other</option>
+              </select>
+            </div>
+            <div><label>Work email *</label><input id="d_email" type="email" required maxlength="160" /></div>
+            <div><label>Phone</label><input id="d_phone" maxlength="30" /></div>
+          </div>
+          <label>Team size / recruiters</label>
+          <input id="d_headcount" maxlength="60" placeholder="e.g. 8 recruiters, 2 BD" />
+          <label>What are you using today?</label>
+          <textarea id="d_message" maxlength="2000" placeholder="Current ATS/spreadsheets, biggest pain point…"></textarea>
+          <button type="submit" class="btn btn-primary" id="demoBtn" style="width:100%;margin-top:22px;">Request demo →</button>
+          <div id="demoMsg" class="msg"></div>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="cols">
+      <div>
+        <div class="brand"><span class="mark">W</span><span>WorkSource<small>Recruitment Partners</small></span></div>
+        <p style="margin-top:16px;max-width:280px;color:rgba(255,255,255,.55);font-size:14px;">
+          HireOS is the recruitment operating system built and run by WorkSource — now available to other teams.
+        </p>
+      </div>
+      <div>
+        <h5>Platform</h5>
+        <a href="#modules">Modules</a>
+        <a href="#ai">AI capabilities</a>
+        <a href="#compare">Comparison</a>
+        <a href="#demo">Request a demo</a>
+      </div>
+      <div>
+        <h5>Agency</h5>
+        <a href="home.html">WorkSource</a>
+        <a href="home.html#services">Services</a>
+        <a href="home.html#enquiry">Hire talent</a>
+      </div>
+      <div>
+        <h5>Access</h5>
+        <a href="careers.html">Open positions</a>
+        <a href="index.html">Team login</a>
+      </div>
+    </div>
+    <div class="bot">
+      <div>© <span id="yr"></span> WorkSource Recruitment. All rights reserved.</div>
+      <div><a href="mailto:azad.khan@worksource.co.in" style="display:inline;">azad.khan@worksource.co.in</a></div>
+    </div>
+  </div>
+</footer>
+
+<script>
+document.getElementById('yr').textContent = new Date().getFullYear();
+var FN = 'https://xrargvfdummasvaacfko.supabase.co/functions/v1';
+
+function submitDemo(e){
+  e.preventDefault();
+  var btn = document.getElementById('demoBtn'), msg = document.getElementById('demoMsg');
+  btn.disabled = true; btn.textContent = 'Sending…'; msg.textContent = ''; msg.className='msg';
+  fetch(FN + '/public-enquiry', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({
+      kind: 'hireos_demo',
+      website: document.getElementById('website').value,
+      company_name: document.getElementById('d_company').value,
+      contact_name: document.getElementById('d_name').value,
+      contact_email: document.getElementById('d_email').value,
+      contact_phone: document.getElementById('d_phone').value,
+      segment: document.getElementById('d_segment').value,
+      headcount: document.getElementById('d_headcount').value,
+      message: document.getElementById('d_message').value
+    })
+  }).then(function(r){ return r.json().then(function(d){ return {ok:r.ok, d:d}; }); })
+    .then(function(res){
+      btn.disabled = false; btn.textContent = 'Request demo →';
+      if(res.ok && res.d.ok){
+        msg.className='msg ok';
+        msg.textContent = res.d.message || 'Thank you — we will be in touch shortly.';
+        document.getElementById('demoForm').reset();
+      } else {
+        msg.className='msg err';
+        msg.textContent = (res.d && res.d.error) || 'Something went wrong. Please email us directly.';
+      }
+    }).catch(function(){
+      btn.disabled = false; btn.textContent = 'Request demo →';
+      msg.className='msg err'; msg.textContent = 'Network error. Please try again.';
+    });
+  return false;
+}
+</script>
+</body>
+</html>
