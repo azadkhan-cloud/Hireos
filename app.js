@@ -41,6 +41,8 @@ function toast(msg){
 }
 
 async function authFetch(path, opts={}){
+  // keep the access token alive before every call
+  if(session && typeof ensureFreshSession === 'function'){ await ensureFreshSession(); }
   const headers = Object.assign({
     'apikey': ANON_KEY,
     'Authorization': 'Bearer ' + (session ? session.access_token : ANON_KEY),
@@ -65,6 +67,76 @@ async function rest(table, {method='GET', query='', body=null, prefer=''}={}){
 // ============================================================
 // 3. AUTH
 // ============================================================
+// ---------- session persistence + token refresh ----------
+function saveSession(){
+  try{
+    if(!session) return;
+    localStorage.setItem('hireos_session', JSON.stringify({
+      refresh_token: session.refresh_token,
+      access_token: session.access_token,
+      expires_at: session.expires_at
+    }));
+  }catch(e){}
+}
+
+// Exchange the refresh token for a fresh access token.
+async function refreshSession(){
+  let stored = null;
+  try{ stored = JSON.parse(localStorage.getItem('hireos_session') || 'null'); }catch(e){}
+  const rt = (session && session.refresh_token) || (stored && stored.refresh_token);
+  if(!rt) return false;
+  try{
+    const res = await fetch(SUPABASE_URL + '/auth/v1/token?grant_type=refresh_token', {
+      method:'POST',
+      headers:{'apikey':ANON_KEY,'Content-Type':'application/json'},
+      body: JSON.stringify({refresh_token: rt})
+    });
+    if(!res.ok) throw new Error('refresh failed');
+    const data = await res.json();
+    if(!data.access_token) throw new Error('no token');
+    session = {
+      access_token: data.access_token,
+      refresh_token: data.refresh_token || rt,
+      expires_at: Date.now() + ((data.expires_in || 3600) * 1000),
+      user: data.user || (session && session.user)
+    };
+    saveSession();
+    return true;
+  }catch(e){
+    try{ localStorage.removeItem('hireos_session'); }catch(_){}
+    session = null;
+    return false;
+  }
+}
+
+// Refresh a couple of minutes before the token actually dies.
+async function ensureFreshSession(){
+  if(!session) return false;
+  if(session.expires_at && Date.now() < session.expires_at - 120000) return true;
+  return await refreshSession();
+}
+setInterval(function(){ if(session) ensureFreshSession(); }, 4 * 60 * 1000);
+
+// On page load: if a valid refresh token is stored, sign the user straight back in.
+async function restoreSession(){
+  let stored = null;
+  try{ stored = JSON.parse(localStorage.getItem('hireos_session') || 'null'); }catch(e){}
+  if(!stored || !stored.refresh_token) return;
+  const ok = await refreshSession();
+  if(!ok) return;
+  try{
+    const profiles = await rest('users', {query:`auth_id=eq.${session.user.id}&select=*`});
+    if(!profiles || !profiles.length){ logout(); return; }
+    profile = profiles[0];
+    enterApp();
+  }catch(e){
+    session = null;
+    try{ localStorage.removeItem('hireos_session'); }catch(_){}
+  }
+}
+document.addEventListener('DOMContentLoaded', restoreSession);
+if(document.readyState !== 'loading') restoreSession();
+
 async function doLogin(){
   const email = document.getElementById('loginEmail').value.trim();
   const password = document.getElementById('loginPassword').value;
@@ -82,7 +154,13 @@ async function doLogin(){
       throw new Error(`HTTP ${res.status} — non-JSON response: ${rawText.slice(0,200)}`);
     }
     if(!res.ok) throw new Error(`HTTP ${res.status} — ${data.error_description || data.msg || data.error || JSON.stringify(data)}`);
-    session = {access_token: data.access_token, user: data.user};
+    session = {
+      access_token: data.access_token,
+      refresh_token: data.refresh_token,
+      expires_at: Date.now() + ((data.expires_in || 3600) * 1000),
+      user: data.user
+    };
+    saveSession();
     const profiles = await rest('users', {query:`auth_id=eq.${data.user.id}&select=*`});
     if(!profiles || !profiles.length) throw new Error('No HireOS profile linked to this login. Contact admin.');
     profile = profiles[0];
@@ -95,6 +173,7 @@ async function doLogin(){
 
 function logout(){
   session = null; profile = null;
+  try{ localStorage.removeItem('hireos_session'); }catch(e){}
   document.getElementById('app').classList.remove('active');
   document.getElementById('loginScreen').style.display = 'flex';
   document.getElementById('loginEmail').value=''; document.getElementById('loginPassword').value='';
